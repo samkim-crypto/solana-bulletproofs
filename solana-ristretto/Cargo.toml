@@ -1,0 +1,10 @@
+[package]
+name = "solana-ristretto"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+solana-zk-token-sdk = "1.17.17"
+
+[target.'cfg(not(target_os = "solana"))'.dependencies]
+curve25519-dalek = "3.2.1"
