@@ -1,0 +1,22 @@
+[package]
+name = "boomerang-test-program"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+test-sbf = []
+
+[dependencies]
+solana-program = "1.17.17"
+solana-merlin = { version = "0.1.0", path = "../solana-merlin" }
+solana-ristretto = { version = "0.1.0", path = "../solana-ristretto" }
+
+[dev-dependencies]
+solana-program-test = "1.17.17"
+solana-sdk = "1.17.17"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
