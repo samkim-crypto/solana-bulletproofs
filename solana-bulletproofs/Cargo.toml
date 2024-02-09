@@ -1,0 +1,8 @@
+[package]
+name = "solana-bulletproofs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+solana-zk-token-sdk = "1.17.17"
+solana-ristretto = { version = "0.1.0", path = "../solana-ristretto" }
