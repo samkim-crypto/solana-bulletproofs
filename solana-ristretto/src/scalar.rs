@@ -40,4 +40,8 @@ impl Scalar {
         let result = left * right;
         Ok(Self(result.into()))
     }
+
+    pub fn zero() -> Self {
+        Scalar(PodScalar([0u8; 32]))
+    }
 }
