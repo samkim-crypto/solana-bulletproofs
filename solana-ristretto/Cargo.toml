@@ -8,3 +8,4 @@ solana-zk-token-sdk = "1.17.17"
 
 [target.'cfg(not(target_os = "solana"))'.dependencies]
 curve25519-dalek = "3.2.1"
+digest = { version="0.10", default-features=false, optional=true}
