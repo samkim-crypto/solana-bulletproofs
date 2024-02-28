@@ -1,14 +1,20 @@
-//! The generators module contains the API functions for producing a set of 
+//! The generators module contains the API functions for producing a set of
 //! generators for a rangeproof.
 
-use solana_ristretto::{RistrettoPoint, Scalar};
-use solana_ristretto::constants::RISTRETTO_BASEPOINT_POINT;
+#[cfg(not(target_os = "solana"))]
+use sha3::{Sha3XofReader, Sha3_512, Shake256};
+//#[cfg(target_os = "solana")]
+
+use solana_ristretto::{
+    constants::{RISTRETTO_BASEPOINT_COMPRESSED, RISTRETTO_BASEPOINT_POINT},
+    ristretto::{RistrettoPoint, Scalar},
+};
 
 pub struct PedersenGens {
     /// Base for the committed value
-    pub B: RistrettoPoint
+    pub B: RistrettoPoint,
     /// Base for the blinding factor
-    pub B_blinding: RistrettoPoint
+    pub B_blinding: RistrettoPoint,
 }
 
 impl PedersenGens {
@@ -21,7 +27,7 @@ impl Default for PedersenGens {
     fn default() -> Self {
         PedersenGens {
             B: RISTRETTO_BASEPOINT_POINT,
-            B_blinding: RISTRETTO_BASEPOINT_POINT,   //TODO replace with compressed point
+            B_blinding: RistrettoPoint::hash_from_bytes(RISTRETTO_BASEPOINT_COMPRESSED.as_bytes()),
         }
     }
 }
@@ -45,18 +51,33 @@ impl BulletproofGens {
             party_capacity,
             G_vec: (0..party_capacity).map(|_| Vec::new()).collect(),
             H_vec: (0..party_capacity).map(|_| Vec::new()).collect(),
-        }
+        };
         gens.increase_capacity(gens_capacity);
         gens
     }
 
+    /// Increases the generators' capacity to the amount specified.
+    /// If less than or equal to the current capacity, does nothing.
     pub fn increase_capacity(&mut self, new_capacity: usize) {
-        // TODO implement
-        // Needs the generator chain
+        if self.gens_capacity >= new_capacity {
+            return;
+        }
+
+        for i in 0..self.party_capacity {
+            let party_index = i as u32;
+            let mut label = [b'G', 0, 0, 0, 0];
+            // TODO little endian stuff
+            self.G_vec[i].extend(
+                &mut GeneratorsChain::new(&label)
+                    .fast_forward(self.gens_capacity)
+                    .take(new_capacity - self.gens_capacity),
+            );
+        }
+        self.gens_capacity = new_capacity;
     }
 
     /// Return an iterator over the aggregation of the parties' G generators with given size `n`.
-    pub (crate) fn G(&self, n: usize, m: usize) -> impl Iterator<Item = &RistrettoPoint> {
+    pub(crate) fn G(&self, n: usize, m: usize) -> impl Iterator<Item = &RistrettoPoint> {
         AggregatedGensIter {
             n,
             m,
@@ -75,6 +96,49 @@ impl BulletproofGens {
             party_idx: 0,
             gen_idx: 0,
         }
+    }
+}
+
+struct GeneratorsChain {
+    // if executed off-chain, use sha3 library
+    #[cfg(not(target_os = "solana"))]
+    reader: Sha3XofReader,
+    // if executed on-chain, use the solana syscalls for sha3
+    //#[cfg(target_os = "solana")]
+    // TODO? syscall?
+}
+
+impl GeneratorsChain {
+    /// Creates a chain of generators, determined by the hash of `label`.
+    fn new(label: &[u8]) -> Self {
+        // if executed off-chain, use sha3 library
+        #[cfg(not(target_os = "solana"))]
+        {
+            let mut shake = Shake256::default();
+            shake.input(b"GeneratorsChain");
+            shake.input(label);
+
+            GeneratorsChain {
+                reader: shake.xof_result(),
+            }
+        }
+    }
+
+    /// Advances the reader n times, squeezing and discarding
+    /// the result.
+    fn fast_forward(mut self, n: usize) -> Self {
+        for _ in 0..n {
+            let mut buf = [0u8; 64];
+            self.reader.read(&mut buf);
+        }
+        self
+    }
+}
+
+//TODO Is that needed?
+impl Default for GeneratorsChain {
+    fn default() -> Self {
+        Self::new(&[])
     }
 }
 
