@@ -1,7 +1,8 @@
 #[cfg(not(target_os = "solana"))]
 use curve25519_dalek::{
+    ristretto::CompressedRistretto as DalekCompressedRistrettoPoint,
     ristretto::RistrettoPoint as DalekRistrettoPoint, scalar::Scalar as DalekScalar,
-    traits::VartimeMultiscalarMul,
+    traits::VartimeMultiscalarMul, digest::{Digest, generic_array::typenum::U64},
 };
 #[cfg(target_os = "solana")]
 use solana_zk_token_sdk::curve25519::ristretto::{
@@ -104,4 +105,36 @@ impl RistrettoPoint {
             Ok(Self(result))
         }
     }
+}
+
+impl RistrettoPoint {
+    pub fn hash_from_bytes<D>(input: &[u8]) -> RistrettoPoint 
+        where D: Digest<OutputSize = U64> + Default 
+    {
+        // if executed off-chain, use the dalek implementation
+        #[cfg(not(target_os = "solana"))]
+        {
+            let dalekpoint = DalekRistrettoPoint::hash_from_bytes::<D>(input);
+
+            let compresseddalek = dalekpoint.compress();
+            let bytes = compresseddalek.as_bytes();
+            RistrettoPoint::from_bytes(bytes).unwrap()
+        }
+        // if executed on-chain, use the solana equivalent from PodRistrettoPoint
+        #[cfg(target_os = "solana")]
+        {
+            // TODO implement
+        }
+    }
+}
+
+pub struct CompressedRistretto(pub [u8; 32]); // TODO construct from solana?
+
+impl CompressedRistretto {
+    /// Copy the bytes of this `CompressedRistretto`.
+    pub const fn to_bytes(&self) -> [u8; 32] {
+        self.0
+    }
+
+    // TODO What else do we need implemented here?
 }
