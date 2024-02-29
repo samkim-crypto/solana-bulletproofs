@@ -1,8 +1,9 @@
 #[cfg(not(target_os = "solana"))]
 use curve25519_dalek::{
-    ristretto::CompressedRistretto as DalekCompressedRistrettoPoint,
-    ristretto::RistrettoPoint as DalekRistrettoPoint, scalar::Scalar as DalekScalar,
-    traits::VartimeMultiscalarMul, digest::{Digest, generic_array::typenum::U64},
+    digest::{generic_array::typenum::U64, Digest},
+    ristretto::RistrettoPoint as DalekRistrettoPoint,
+    scalar::Scalar as DalekScalar,
+    traits::VartimeMultiscalarMul,
 };
 #[cfg(target_os = "solana")]
 use solana_zk_token_sdk::curve25519::ristretto::{
@@ -108,8 +109,9 @@ impl RistrettoPoint {
 }
 
 impl RistrettoPoint {
-    pub fn hash_from_bytes<D>(input: &[u8]) -> RistrettoPoint 
-        where D: Digest<OutputSize = U64> + Default 
+    pub fn hash_from_bytes<D>(input: &[u8]) -> RistrettoPoint
+    where
+        D: Digest<OutputSize = U64> + Default,
     {
         // if executed off-chain, use the dalek implementation
         #[cfg(not(target_os = "solana"))]

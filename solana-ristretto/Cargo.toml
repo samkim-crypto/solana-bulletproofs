@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+lazy_static = "1.4.0"
 solana-zk-token-sdk = "1.17.17"
 
 [target.'cfg(not(target_os = "solana"))'.dependencies]
