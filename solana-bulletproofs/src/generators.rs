@@ -7,7 +7,8 @@ use sha3::{Sha3XofReader, Sha3_512, Shake256};
 
 use solana_ristretto::{
     constants::{RISTRETTO_BASEPOINT_COMPRESSED, RISTRETTO_BASEPOINT_POINT},
-    ristretto::{RistrettoPoint, Scalar},
+    ristretto::RistrettoPoint,
+    scalar::Scalar,
 };
 
 pub struct PedersenGens {
@@ -19,15 +20,16 @@ pub struct PedersenGens {
 
 impl PedersenGens {
     pub fn commit(&self, value: Scalar, blinding: Scalar) -> RistrettoPoint {
-        RistrettoPoint::multiscalar_multiply(&[value, blinding], &[self.B, self.B_blinding])
+        RistrettoPoint::multiscalar_multiply(&[value, blinding], &[self.B, self.B_blinding]).unwrap()
     }
 }
 
 impl Default for PedersenGens {
     fn default() -> Self {
         PedersenGens {
-            B: RISTRETTO_BASEPOINT_POINT,
-            B_blinding: RistrettoPoint::hash_from_bytes(RISTRETTO_BASEPOINT_COMPRESSED.as_bytes()),
+            B: *RISTRETTO_BASEPOINT_POINT,
+            B_blinding: *RISTRETTO_BASEPOINT_POINT // TODO FIX ME
+            //RistrettoPoint::hash_from_bytes::<Sha3_512>(&(*RISTRETTO_BASEPOINT_COMPRESSED).to_bytes()),
         }
     }
 }
@@ -63,7 +65,8 @@ impl BulletproofGens {
             return;
         }
 
-        for i in 0..self.party_capacity {
+        // TODO FIX ME 
+        /*for i in 0..self.party_capacity {
             let party_index = i as u32;
             let mut label = [b'G', 0, 0, 0, 0];
             // TODO little endian stuff
@@ -72,7 +75,7 @@ impl BulletproofGens {
                     .fast_forward(self.gens_capacity)
                     .take(new_capacity - self.gens_capacity),
             );
-        }
+        }*/
         self.gens_capacity = new_capacity;
     }
 
@@ -110,7 +113,7 @@ struct GeneratorsChain {
 
 impl GeneratorsChain {
     /// Creates a chain of generators, determined by the hash of `label`.
-    fn new(label: &[u8]) -> Self {
+    /*fn new(label: &[u8]) -> Self {
         // if executed off-chain, use sha3 library
         #[cfg(not(target_os = "solana"))]
         {
@@ -122,15 +125,16 @@ impl GeneratorsChain {
                 reader: shake.xof_result(),
             }
         }
-    }
+    }*/
 
     /// Advances the reader n times, squeezing and discarding
     /// the result.
     fn fast_forward(mut self, n: usize) -> Self {
-        for _ in 0..n {
+        // TODO FIX ME
+        /*for _ in 0..n {
             let mut buf = [0u8; 64];
             self.reader.read(&mut buf);
-        }
+        }*/
         self
     }
 }
@@ -138,7 +142,8 @@ impl GeneratorsChain {
 //TODO Is that needed?
 impl Default for GeneratorsChain {
     fn default() -> Self {
-        Self::new(&[])
+        todo!()
+        //Self::new(&[])
     }
 }
 
