@@ -1735,6 +1735,7 @@ name = "solana-ristretto"
 version = "0.1.0"
 dependencies = [
  "curve25519-dalek",
+ "lazy_static",
  "solana-zk-token-sdk",
 ]
 

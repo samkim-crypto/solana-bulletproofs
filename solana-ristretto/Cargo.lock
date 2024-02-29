@@ -1664,6 +1664,7 @@ version = "0.1.0"
 dependencies = [
  "curve25519-dalek",
  "digest 0.10.7",
+ "lazy_static",
  "solana-zk-token-sdk",
 ]
 
